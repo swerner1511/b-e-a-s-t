@@ -107,12 +107,9 @@ mkinitcpio -p linux
 
 # Change grub config
 sed -i 's/#GRUB_ENABLE_CRYPTODISK/GRUB_ENABLE_CRYPTODISK/g' /etc/default/grub
-sed -i "s#^GRUB_CMDLINE_LINUX=.*#GRUB_CMDLINE_LINUX=\"cryptdevice=UUID=$(blkid /dev/sda3 -s UUID -o value):cryptsys resume=UUID=$(blkid /dev/sda3 -s UUID -o value):cryptswap\"#g" /etc/default/grub
+sed -i "s#^GRUB_CMDLINE_LINUX_DEFAULT=.*#GRUB_CMDLINE_LINUX_DEFAULT=\"resume=UUDI=$(blkid /dev/sda2 -s UUID -o value):cryptswap\"#g" /etc/default/grub
+sed -i "s#^GRUB_CMDLINE_LINUX=.*#GRUB_CMDLINE_LINUX=\"cryptdevice=UUID=$(blkid /dev/sda3 -s UUID -o value):cryptsys\"#g" /etc/default/grub
 grub-mkconfig -o /boot/grub/grub.cfg
-
-# If you got errors "/run/lvm/lvmetad.socket: connect failed: No such file or directory", that's OK
-# you can get rid of this errors with some workarounds, but this is not really necessary
-# but in any case DO NOT disable lvmetad! This installation will not work without it
 
 # Install grub
 grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=ArchLinux
