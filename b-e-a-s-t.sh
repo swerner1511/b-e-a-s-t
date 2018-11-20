@@ -52,8 +52,8 @@ sgdisk --clear \
 mkfs.fat -F32 /dev/sda1
 
 # Create crypted System Container with /root and /home etc.
-cryptsetup luksFormat $DRIVE3
-cryptsetup open $DRIVE3 cryptsys
+cryptsetup luksFormat ${DRIVE}3
+cryptsetup open ${DRIVE}3 cryptsys
 mkfs.btrfs -L ROOT /dev/mapper/cryptsys
 mount /dev/mapper/cryptsys /mnt
 btrfs sub cr /mnt/@
@@ -108,26 +108,26 @@ mkinitcpio -p linux
 
 # Change grub config
 sed -i 's/#GRUB_ENABLE_CRYPTODISK/GRUB_ENABLE_CRYPTODISK/g' /etc/default/grub
-sed -i "s#^GRUB_CMDLINE_LINUX_DEFAULT=.*#GRUB_CMDLINE_LINUX_DEFAULT=\"resume=UUDI=$(blkid /dev/sda2 -s UUID -o value):cryptswap\"#g" /etc/default/grub
-sed -i "s#^GRUB_CMDLINE_LINUX=.*#GRUB_CMDLINE_LINUX=\"cryptdevice=UUID=$(blkid /dev/sda3 -s UUID -o value):cryptsys\"#g" /etc/default/grub
+sed -i "s#^GRUB_CMDLINE_LINUX_DEFAULT=.*#GRUB_CMDLINE_LINUX_DEFAULT=\"resume=UUDI=$(blkid ${DRIVE}2 -s UUID -o value):cryptswap\"#g" /etc/default/grub
+sed -i "s#^GRUB_CMDLINE_LINUX=.*#GRUB_CMDLINE_LINUX=\"cryptdevice=UUID=$(blkid ${DRIVE}3 -s UUID -o value):cryptsys\"#g" /etc/default/grub
 grub-mkconfig -o /boot/grub/grub.cfg
 
 # Install grub
 grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=ArchLinux
 
 # Create crypted Swap Container
-cryptsetup luksFormat $DRIVE2
-cryptsetup open $DRIVE2 cryptswap
+cryptsetup luksFormat ${DRIVE}2
+cryptsetup open ${DRIVE}2 cryptswap
 mkswap /dev/mapper/cryptswap
 dd bs=512 count=4 if=/dev/urandom of=/etc/keyfile-cryptswap
 chmod 600 /etc/keyfile-cryptswap
-cryptsetup luksAddKey /dev/sda2 /etc/keyfile-cryptswap
+cryptsetup luksAddKey ${DRIVE}2 /etc/keyfile-cryptswap
 swapon /dev/mapper/cryptswap
 
 # Same thing: open LVM without password prompt
 dd bs=512 count=8 if=/dev/urandom of=/crypto_keyfile.bin
 chmod 000 /crypto_keyfile.bin
-cryptsetup luksAddKey /dev/sda3 /crypto_keyfile.bin
+cryptsetup luksAddKey ${DRIVE}3 /crypto_keyfile.bin
 sed -i 's\^FILES=.*\FILES="/crypto_keyfile.bin"\g' /etc/mkinitcpio.conf
 mkinitcpio -p linux
 chmod 600 /boot/initramfs-linux*
