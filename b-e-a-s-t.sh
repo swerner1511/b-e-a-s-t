@@ -13,6 +13,12 @@ TIMEZONE=Europe/Berlin
 LOCALE=de_DE
 KEYMAP=de-latin1-nodeadkeys
 
+# Change Keylayout on live System
+loadkeys $KEYMAP
+
+# Enable WIFI
+wifi-menu
+
 # Enable network time synchronization
 timedatectl set-ntp true
                                                                                                                                                                                              
