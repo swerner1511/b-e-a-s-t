@@ -8,7 +8,9 @@
 # DEFAULT Values for Script Variables (Change to your needs)
 DRIVE=/dev/sda
 HOSTNAME=archlinux
-USERNAME=user
+_USERNAME=user
+_USERPWD=qwer
+_ROOTPWD=qwer
 TIMEZONE=Europe/Berlin
 LOCALE=de_DE
 KEYMAP=de-latin1-nodeadkeys
@@ -96,7 +98,7 @@ echo LANG=$LOCALE.UTF-8 >> /etc/locale.conf
 echo KEYMAP=$KEYMAP > /etc/vconsole.conf
 
 # Set root password
-passwd
+echo "root:${_ROOTPWD}" | chpasswd
 
 # Change Binaries in /etc/mkinitcpio.conf
 sed -i 's\^BINARIES=.*\BINARIES="/usr/bin/btrfs"\g' /etc/mkinitcpio.conf
@@ -141,8 +143,8 @@ chmod 700 /boot
 chmod 700 /etc/iptables
 
 # Create non-root user, set password
-useradd -m -g users -G wheel,audio,video $USERNAME
-passwd $USERNAME
+useradd -m -g users -G wheel,audio,video $_USERNAME
+echo "${_USERNAME}:${_USERPWD}" | chpasswd
 
 # Change sudoers file
 sudo sed --in-place 's/^#\s*\(%wheel\s\+ALL=(ALL)\s\+ALL\)/\1/' /etc/sudoers
