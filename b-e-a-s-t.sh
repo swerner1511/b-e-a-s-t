@@ -124,10 +124,10 @@ cryptsetup luksAddKey /dev/sda2 /etc/keyfile-cryptswap
 swapon /dev/mapper/cryptswap
 
 # It is necessary for mounting /boot without password request
-dd bs=512 count=8 if=/dev/urandom of=/etc/key
-chmod 400 /etc/key
-cryptsetup luksAddKey /dev/sda2 /etc/key
-echo "cryptboot /dev/sda2 /etc/key luks" >> /etc/crypttab
+#dd bs=512 count=8 if=/dev/urandom of=/etc/key
+#chmod 400 /etc/key
+#cryptsetup luksAddKey /dev/sda2 /etc/key
+#echo "cryptboot /dev/sda2 /etc/key luks" >> /etc/crypttab
 
 # Same thing: open LVM without password prompt
 dd bs=512 count=8 if=/dev/urandom of=/crypto_keyfile.bin
