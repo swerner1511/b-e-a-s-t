@@ -82,14 +82,17 @@ chroot(){
 arch-chroot /mnt
 
 # Set timezone, hostname...
-ln -sf /usr/share/zoneinfo/Europe/Minsk /etc/localtime
+ln -sf /usr/share/zoneinfo/$TIMEZONE /etc/localtime
 hwclock --systohc --utc
-echo archlinux > /etc/hostname
+echo $HOSTNAME > /etc/hostname
 
 # Configure locales
-echo "de_DE.UTF-8 UTF-8" >> /etc/locale.gen
+echo "$LOCALE.UTF-8 UTF-8" >> /etc/locale.gen
 locale-gen
-echo LANG=de_DE.UTF-8 >> /etc/locale.conf
+echo LANG=$LOCALE.UTF-8 >> /etc/locale.conf
+
+# Configure KEYMAP
+echo KEYMAP=$KEYMAP > /etc/vconsole.conf
 
 # Set root password
 passwd
@@ -101,9 +104,6 @@ sed -i '/HOOKS="base udev autodetect modconf block filesystems keyboard fsck"/c\
 
 # Regenerate initrd image
 mkinitcpio -p linux
-
-# If you got warnings about missing firmware for wd719x and aic94xx, you can ignore it, with high probability you don't even have this hardware
-# But you can install it from AUR if you actually use it
 
 # Change grub config
 sed -i 's/#GRUB_ENABLE_CRYPTODISK/GRUB_ENABLE_CRYPTODISK/g' /etc/default/grub
@@ -156,4 +156,5 @@ passwd $USERNAME
 sudo sed --in-place 's/^#\s*\(%wheel\s\+ALL=(ALL)\s\+ALL\)/\1/' /etc/sudoers
 # and uncomment string %wheel ALL=(ALL) ALL
 
+#localectl --no-convert set-x11-keymap de pc105 nodeadkeys
 }
