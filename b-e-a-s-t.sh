@@ -66,10 +66,7 @@ mkdir /mnt/home
 mount -o subvol=@home /dev/mapper/cryptsys /mnt/home
 
 # Mount
-swapon /dev/mapper/vg0-swap
-mount /dev/mapper/vg0-root /mnt
 mkdir /mnt/boot
-mount /dev/mapper/cryptboot /mnt/boot
 mkdir /mnt/boot/efi
 mount /dev/sda1 /mnt/boot/efi
 
