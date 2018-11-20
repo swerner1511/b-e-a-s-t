@@ -4,3 +4,156 @@
 #
 #	Created by S.Werner 20.11.2018
 #
+
+# DEFAULT Values for Script Variables (Change to your needs)
+DRIVE=/dev/sda
+HOSTNAME=archlinux
+USERNAME=user
+TIMEZONE=Europe/Berlin
+LOCALE=de_DE
+KEYMAP=de-latin1-nodeadkeys
+
+# Enable network time synchronization
+timedatectl set-ntp true
+                                                                                                                                                                                             
+# Check it                                                                                                                                                                                   
+timedatectl status                                                                                                                                                                           
+
+# Select Drive
+lsblk
+echo -n " == Set drive: esp. "/dev/sda" "
+read DRIVE
+                      
+# Wipe Drive Securely
+echo -n " == Wipe Drive Securely? (Y/n): "
+read SECURE_WIPE
+if [ "${SECURE_WIPE:-y}" == "y" ]; then
+	sgdisk --zap-all $DRIVE
+	cryptsetup open --type plain $DRIVE container --key-file /dev/random
+	dd if=/dev/zero of=/dev/mapper/container status=progress
+	cryptsetup close container
+fi
+
+# Create partitions                                                                                                                                                                          
+sgdisk --zap-all $DRIVE
+sgdisk --clear \
+	--new=1:0:+550MiB --typecode=1:ef00 --change-name=1:EFI \
+    --new=2:0:+8GiB   --typecode=2:8200 --change-name=2:cryptswap \
+    --new=3:0:0       --typecode=2:8200 --change-name=3:cryptsystem \
+	$DRIVE
+
+# Make filesystem for EFI
+mkfs.fat -F32 /dev/sda1
+
+# Create crypted System Container with /root and /home etc.
+cryptsetup luksFormat $DRIVE3
+cryptsetup open $DRIVE3 cryptsys
+mkfs.btrfs -L ROOT /dev/mapper/cryptsys
+mount /dev/mapper/cryptsys /mnt
+btrfs sub cr /mnt/@
+btrfs sub cr /mnt/@home
+btrfs sub cr /mnt/@snapshots
+btrfs sub set-default 257 /mnt
+umount /mnt
+mount /dev/mapper/cryptsys /mnt
+mkdir /mnt/home
+mount -o subvol=@home /dev/mapper/cryptsys /mnt/home
+
+# Mount
+swapon /dev/mapper/vg0-swap
+mount /dev/mapper/vg0-root /mnt
+mkdir /mnt/boot
+mount /dev/mapper/cryptboot /mnt/boot
+mkdir /mnt/boot/efi
+mount /dev/sda1 /mnt/boot/efi
+
+# Check
+lsblk
+
+# Install system
+pacstrap /mnt base base-devel grub-efi-x86_64 vim git efibootmgr dialog wpa_supplicant btrfs-progs bash-completion
+
+# Generate fstab
+genfstab -pU /mnt >> /mnt/etc/fstab
+
+# Chroot into new installed system (make a block) need additional fixes
+chroot(){
+
+arch-chroot /mnt
+
+# Set timezone, hostname...
+ln -sf /usr/share/zoneinfo/Europe/Minsk /etc/localtime
+hwclock --systohc --utc
+echo archlinux > /etc/hostname
+
+# Configure locales
+echo "de_DE.UTF-8 UTF-8" >> /etc/locale.gen
+locale-gen
+echo LANG=de_DE.UTF-8 >> /etc/locale.conf
+
+# Set root password
+passwd
+
+# Change Binaries in /etc/mkinitcpio.conf
+sed -i 's\^BINARIES=.*\BINARIES=""\g' /etc/mkinitcpio.conf
+# Change HOOKS in /etc/mkinitcpio.con
+sed -i '/HOOKS="base udev autodetect modconf block filesystems keyboard fsck"/c\HOOKS="base udev autodetect modconf keyboard keymap block encrypt openswap resume filesystems"' /etc/mkinitcpio.conf
+
+# Regenerate initrd image
+mkinitcpio -p linux
+
+# If you got warnings about missing firmware for wd719x and aic94xx, you can ignore it, with high probability you don't even have this hardware
+# But you can install it from AUR if you actually use it
+
+# Change grub config
+sed -i 's/#GRUB_ENABLE_CRYPTODISK/GRUB_ENABLE_CRYPTODISK/g' /etc/default/grub
+sed -i "s#^GRUB_CMDLINE_LINUX=.*#GRUB_CMDLINE_LINUX=\"cryptdevice=UUID=$(blkid /dev/sda3 -s UUID -o value):cryptsys resume=UUID=$(blkid /dev/sda3 -s UUID -o value):cryptswap\"#g" /etc/default/grub
+grub-mkconfig -o /boot/grub/grub.cfg
+
+# If you got errors "/run/lvm/lvmetad.socket: connect failed: No such file or directory", that's OK
+# you can get rid of this errors with some workarounds, but this is not really necessary
+# but in any case DO NOT disable lvmetad! This installation will not work without it
+
+# Install grub
+grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=ArchLinux
+
+# Create crypted Swap Container
+cryptsetup luksFormat $DRIVE2
+cryptsetup open $DRIVE2 cryptswap
+mkswap /dev/mapper/cryptswap
+dd bs=512 count=4 if=/dev/urandom of=/etc/keyfile-cryptswap
+chmod 600 /etc/keyfile-cryptswap
+cryptsetup luksAddKey /dev/sda2 /etc/keyfile-cryptswap
+swapon /dev/mapper/cryptswap
+
+# It is necessary for mounting /boot without password request
+dd bs=512 count=8 if=/dev/urandom of=/etc/key
+chmod 400 /etc/key
+cryptsetup luksAddKey /dev/sda2 /etc/key
+echo "cryptboot /dev/sda2 /etc/key luks" >> /etc/crypttab
+
+# Same thing: open LVM without password prompt
+dd bs=512 count=8 if=/dev/urandom of=/crypto_keyfile.bin
+chmod 000 /crypto_keyfile.bin
+cryptsetup luksAddKey /dev/sda3 /crypto_keyfile.bin
+sed -i 's\^FILES=.*\FILES="/crypto_keyfile.bin"\g' /etc/mkinitcpio.conf
+mkinitcpio -p linux
+chmod 600 /boot/initramfs-linux*
+
+# Enable Intel microcode CPU updates (if you use Intel processor, of course)
+pacman -S intel-ucode
+grub-mkconfig -o /boot/grub/grub.cfg
+
+# Some additional security
+chmod 700 /boot
+chmod 700 /etc/iptables
+
+# Create non-root user, set password
+useradd -m -g users -G wheel,audio,video $USERNAME
+passwd $USERNAME
+
+# Change sudoers file
+sudo sed --in-place 's/^#\s*\(%wheel\s\+ALL=(ALL)\s\+ALL\)/\1/' /etc/sudoers
+# and uncomment string %wheel ALL=(ALL) ALL
+
+}
