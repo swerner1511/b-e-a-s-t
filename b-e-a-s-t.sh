@@ -150,5 +150,15 @@ echo "${_USERNAME}:${_USERPWD}" | chpasswd
 sudo sed --in-place 's/^#\s*\(%wheel\s\+ALL=(ALL)\s\+ALL\)/\1/' /etc/sudoers
 # and uncomment string %wheel ALL=(ALL) ALL
 
+#Xorg Server etc
+xorg-server xorg-xinit xf86-video-intel
+
+#Desktop Evironment (if unwanted delete the next line)
+pacman -S gnome gnome-extra gdm
+systemctl enable gdm.service NetworkManager
+
+#Custom Additional Packages
+pacman -S firefox firefox-i18n-de thunderbird thunderbird-i18n-de
+
 #localectl --no-convert set-x11-keymap de pc105 nodeadkeys
 EOF
