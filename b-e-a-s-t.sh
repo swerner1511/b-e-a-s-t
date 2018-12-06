@@ -158,7 +158,7 @@ pacman -S gnome gnome-extra gdm
 systemctl enable gdm.service NetworkManager
 
 #Custom Additional Packages
-pacman -S firefox firefox-i18n-de thunderbird thunderbird-i18n-de
+pacman -S firefox firefox-i18n-de thunderbird thunderbird-i18n-de htop tilix git
 
 #localectl --no-convert set-x11-keymap de pc105 nodeadkeys
 EOF
