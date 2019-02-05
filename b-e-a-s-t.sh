@@ -114,6 +114,7 @@ mkinitcpio -p linux
 sed -i 's/#GRUB_ENABLE_CRYPTODISK/GRUB_ENABLE_CRYPTODISK/g' /etc/default/grub
 sed -i "s#^GRUB_CMDLINE_LINUX_DEFAULT=.*#GRUB_CMDLINE_LINUX_DEFAULT=\"resume=UUDI=$(blkid ${DRIVE}2 -s UUID -o value):cryptswap\"#g" /etc/default/grub
 sed -i "s#^GRUB_CMDLINE_LINUX=.*#GRUB_CMDLINE_LINUX=\"cryptdevice=UUID=$(blkid ${DRIVE}3 -s UUID -o value):cryptsys\"#g" /etc/default/grub
+nano /boot/grub/grub.cfg
 grub-mkconfig -o /boot/grub/grub.cfg
 
 # Install grub
@@ -133,6 +134,7 @@ dd bs=512 count=8 if=/dev/urandom of=/crypto_keyfile.bin
 chmod 000 /crypto_keyfile.bin
 cryptsetup luksAddKey ${DRIVE}3 /crypto_keyfile.bin
 sed -i 's\^FILES=.*\FILES="/crypto_keyfile.bin"\g' /etc/mkinitcpio.conf
+nano /etc/mkinicpio.conf
 mkinitcpio -p linux
 chmod 600 /boot/initramfs-linux*
 
