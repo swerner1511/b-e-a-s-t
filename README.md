@@ -9,7 +9,7 @@ Bulletproof Encrypted Arch Setup (Tool) aka B.E.A.S.T
 | unencrypted          | LUKS-encrypted       | plain-encrypted      |
 |                      |                      |                      |
 | /efi                 | /                    | [SWAP]               |
-| /dev/sda1            | /dev/sda2            | /dev/sda3            |
+| /dev/sda1            | /dev/sda3            | /dev/sda2            |
 +----------------------+----------------------+----------------------+
 ```
 
