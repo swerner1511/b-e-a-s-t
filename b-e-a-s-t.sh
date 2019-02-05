@@ -3,14 +3,15 @@
 # Bulletproof Encrypted Arch Setup (Tool) aka B.E.A.S.T
 #
 #	Created by S.Werner 20.11.2018
+#	Updated by S.Werner 05.02.2019
 #
 
 # DEFAULT Values for Script Variables (Change to your needs)
 DRIVE=/dev/sda
-HOSTNAME=archlinux
-_USERNAME=user
-_USERPWD=qwer
-_ROOTPWD=qwer
+HOSTNAME=your-hostname
+_USERNAME=your-username
+_USERPWD=your-userpwd
+_ROOTPWD=root-pwd
 TIMEZONE=Europe/Berlin
 LOCALE=de_DE
 KEYMAP=de-latin1-nodeadkeys
@@ -46,8 +47,8 @@ fi
 sgdisk --zap-all $DRIVE
 sgdisk --clear \
 	--new=1:0:+550MiB --typecode=1:ef00 --change-name=1:EFI \
-    --new=2:0:+8GiB   --typecode=2:8200 --change-name=2:cryptswap \
-    --new=3:0:0       --typecode=2:8200 --change-name=3:cryptsystem \
+    	--new=2:0:+8GiB   --typecode=2:8200 --change-name=2:cryptswap \
+    	--new=3:0:0       --typecode=3:8300 --change-name=3:cryptsystem \
 	$DRIVE
 
 # Make filesystem for EFI
@@ -153,12 +154,36 @@ sudo sed --in-place 's/^#\s*\(%wheel\s\+ALL=(ALL)\s\+ALL\)/\1/' /etc/sudoers
 #Xorg Server etc
 xorg-server xorg-xinit xf86-video-intel
 
-#Desktop Evironment (if unwanted delete the next line)
+#Desktop Evironment (if unwanted comment the next lines)
 pacman -S gnome gnome-extra gdm
 systemctl enable gdm.service NetworkManager
 
-#Custom Additional Packages
+#Custom Additional Packages (if unwanted comment the next lines)
 pacman -S firefox firefox-i18n-de thunderbird thunderbird-i18n-de htop tilix git
+pacman -S wget rsync svn linux-headers
+pacman -S xdg-user-dirs
+xdg-user-dirs-update
 
+# Reflector 
+pacman -S reflector
+reflector --verbose -l 5 -p https --sort rate --save /etc/pacman.d/mirrorlist
+
+# AUR-Helper
+cd /tmp
+git clone https://aur.archlinux.org/trizen.git
+cd trizen
+makepkg -rsi
+rm -R /tmp/trizen* 
+
+# ToDO after Setup and reboot
+#trizen -S mkinitcpio-openswap
+	#sudo blkid
+	#sudo nano -w /etc/openswap.conf
+		#swap_device=/dev/disk/by-uuid/...
+		#crypt_swap_name=swapDevice
+		#keyfile_device=/dev/mapper/cryptsys
+		#keyfile_filename=etc/keyfile-cryptswap
+	#sudo mkinitcpio -p linux
+#
 #localectl --no-convert set-x11-keymap de pc105 nodeadkeys
 EOF
