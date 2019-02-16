@@ -105,15 +105,15 @@ echo "root:${_ROOTPWD}" | chpasswd
 sed -i 's\^BINARIES=.*\BINARIES="/usr/bin/btrfs"\g' /etc/mkinitcpio.conf
 nano /etc/mkinicpio.conf
 # Change HOOKS in /etc/mkinitcpio.con
-#sed -i "s#^HOOKS="base udev autodetect modconf block filesystems keyboard fsck"#HOOKS="base udev autodetect modconf keyboard keymap block encrypt openswap resume filesystems"#g" /etc/mkinitcpio.conf
+sed -i "s#^HOOKS="base udev autodetect modconf block filesystems keyboard fsck"#HOOKS="base udev autodetect modconf keyboard keymap block encrypt openswap resume filesystems"g" /etc/mkinitcpio.conf
 
 # Regenerate initrd image
 mkinitcpio -p linux
 
 # Change grub config
 sed -i 's/#GRUB_ENABLE_CRYPTODISK/GRUB_ENABLE_CRYPTODISK/g' /etc/default/grub
-sed -i "s#^GRUB_CMDLINE_LINUX_DEFAULT=.*#GRUB_CMDLINE_LINUX_DEFAULT=\"resume=UUDI=$(blkid ${DRIVE}2 -s UUID -o value):cryptswap\"#g" /etc/default/grub
-sed -i "s#^GRUB_CMDLINE_LINUX=.*#GRUB_CMDLINE_LINUX=\"cryptdevice=UUID=$(blkid ${DRIVE}3 -s UUID -o value):cryptsys\"#g" /etc/default/grub
+sed -i "s#^GRUB_CMDLINE_LINUX_DEFAULT=.*#GRUB_CMDLINE_LINUX_DEFAULT=\"resume=UUDI=$(blkid ${DRIVE}2 -s UUID -o value):cryptswap\"g" /etc/default/grub
+sed -i "s#^GRUB_CMDLINE_LINUX=.*#GRUB_CMDLINE_LINUX=\"cryptdevice=UUID=$(blkid ${DRIVE}3 -s UUID -o value):cryptsys\"g" /etc/default/grub
 nano /boot/grub/grub.cfg
 grub-mkconfig -o /boot/grub/grub.cfg
 
