@@ -114,9 +114,7 @@ echo "root:${_ROOTPWD}" | chpasswd
 # Change Binaries in /etc/mkinitcpio.conf
 sed -i 's\^BINARIES=.*\BINARIES="/usr/bin/btrfs"\g' /etc/mkinitcpio.conf
 # Change HOOKS in /etc/mkinitcpio.conf
-sed -i 's/^HOOKS=.*/HOOKS=\(base udev autodetect modconf keyboard keymap block encrypt openswap resume filesystems)\/g' /etc/mkinitcpio.conf
-#sed -i "s#^HOOKS="base udev autodetect modconf block filesystems keyboard fsck"#HOOKS="base udev autodetect modconf keyboard keymap block encrypt openswap resume filesystems"g" /etc/mkinitcpio.conf
-#sed -i "s/HOOKS="base udev autodetect modconf block filesystems keyboard fsck"#^/HOOKS="base udev autodetect modconf keyboard keymap block encrypt openswap resume filesystems"/g" /etc/mkinitcpio.conf
+sed -i '/HOOKS="base udev autodetect modconf block filesystems keyboard fsck"/c\HOOKS="base udev autodetect modconf keyboard keymap block encrypt openswap resume filesystems"' /etc/mkinitcpio.conf
 
 # Regenerate initrd image
 mkinitcpio -p linux
