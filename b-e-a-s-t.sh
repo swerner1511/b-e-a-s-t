@@ -114,7 +114,7 @@ echo "root:${_ROOTPWD}" | chpasswd
 # Change Binaries in /etc/mkinitcpio.conf
 sed -i 's\^BINARIES=.*\BINARIES="/usr/bin/btrfs"\g' /etc/mkinitcpio.conf
 # Change HOOKS in /etc/mkinitcpio.conf
-
+sed -i 's/^HOOKS=.*/HOOKS=\(base udev autodetect modconf keyboard keymap block encrypt openswap resume filesystems)\/g' /etc/mkinitcpio.conf
 #sed -i "s#^HOOKS="base udev autodetect modconf block filesystems keyboard fsck"#HOOKS="base udev autodetect modconf keyboard keymap block encrypt openswap resume filesystems"g" /etc/mkinitcpio.conf
 #sed -i "s/HOOKS="base udev autodetect modconf block filesystems keyboard fsck"#^/HOOKS="base udev autodetect modconf keyboard keymap block encrypt openswap resume filesystems"/g" /etc/mkinitcpio.conf
 
@@ -123,8 +123,8 @@ mkinitcpio -p linux
 
 # Change grub config
 sed -i 's/#GRUB_ENABLE_CRYPTODISK/GRUB_ENABLE_CRYPTODISK/g' /etc/default/grub
-sed -i "s#^GRUB_CMDLINE_LINUX_DEFAULT=.*#GRUB_CMDLINE_LINUX_DEFAULT=\"resume=UUDI=$(blkid ${DRIVE}2 -s UUID -o value):cryptswap\"g" /etc/default/grub
-sed -i "s#^GRUB_CMDLINE_LINUX=.*#GRUB_CMDLINE_LINUX=\"cryptdevice=UUID=$(blkid ${DRIVE}3 -s UUID -o value):cryptsys\"g" /etc/default/grub
+sed -i "s/^GRUB_CMDLINE_LINUX_DEFAULT=.*/GRUB_CMDLINE_LINUX_DEFAULT=\"resume=UUDI=$(blkid ${DRIVE}2 -s UUID -o value):cryptswap\"/g" /etc/default/grub
+sed -i "s/^GRUB_CMDLINE_LINUX=.*/GRUB_CMDLINE_LINUX=\"cryptdevice=UUID=$(blkid ${DRIVE}3 -s UUID -o value):cryptsys\"/g" /etc/default/grub
 
 # Install grub
 grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=ArchLinux
