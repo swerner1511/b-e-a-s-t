@@ -3,7 +3,7 @@
 # Bulletproof Encrypted Arch Setup (Tool) aka B.E.A.S.T
 #
 #	Created by S.Werner 20.11.2018
-#	Updated by S.Werner 16.02.2019
+#	Updated by S.Werner 11.03.2019
 #
 
 # DEFAULT Values for Script Variables (Change to your needs)
