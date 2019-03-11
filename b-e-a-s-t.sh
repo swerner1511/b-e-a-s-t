@@ -83,7 +83,17 @@ pacstrap /mnt base base-devel grub-efi-x86_64 vim git efibootmgr dialog wpa_supp
 genfstab -pU /mnt >> /mnt/etc/fstab
 
 # Chroot into new installed system (make a block) need additional fixes
-arch-chroot /mnt /bin/bash <<EOF
+cat <<EOF > /mnt/root/b-e-a-s-t_p2.sh
+
+#Values
+DRIVE=/dev/sda
+HOSTNAME=your-hostname
+_USERNAME=your-username
+_USERPWD=your-userpwd
+_ROOTPWD=root-pwd
+TIMEZONE=Europe/Berlin
+LOCALE=de_DE
+KEYMAP=de-latin1-nodeadkeys
 
 # Set timezone, hostname...
 ln -sf /usr/share/zoneinfo/$TIMEZONE /etc/localtime
@@ -103,10 +113,10 @@ echo "root:${_ROOTPWD}" | chpasswd
 
 # Change Binaries in /etc/mkinitcpio.conf
 sed -i 's\^BINARIES=.*\BINARIES="/usr/bin/btrfs"\g' /etc/mkinitcpio.conf
-nano /etc/mkinicpio.conf
-# Change HOOKS in /etc/mkinitcpio.con
+# Change HOOKS in /etc/mkinitcpio.conf
+
 #sed -i "s#^HOOKS="base udev autodetect modconf block filesystems keyboard fsck"#HOOKS="base udev autodetect modconf keyboard keymap block encrypt openswap resume filesystems"g" /etc/mkinitcpio.conf
-sed -i "s/HOOKS="base udev autodetect modconf block filesystems keyboard fsck"#^/HOOKS="base udev autodetect modconf keyboard keymap block encrypt openswap resume filesystems"/g" /etc/mkinitcpio.conf
+#sed -i "s/HOOKS="base udev autodetect modconf block filesystems keyboard fsck"#^/HOOKS="base udev autodetect modconf keyboard keymap block encrypt openswap resume filesystems"/g" /etc/mkinitcpio.conf
 
 # Regenerate initrd image
 mkinitcpio -p linux
@@ -115,16 +125,12 @@ mkinitcpio -p linux
 sed -i 's/#GRUB_ENABLE_CRYPTODISK/GRUB_ENABLE_CRYPTODISK/g' /etc/default/grub
 sed -i "s#^GRUB_CMDLINE_LINUX_DEFAULT=.*#GRUB_CMDLINE_LINUX_DEFAULT=\"resume=UUDI=$(blkid ${DRIVE}2 -s UUID -o value):cryptswap\"g" /etc/default/grub
 sed -i "s#^GRUB_CMDLINE_LINUX=.*#GRUB_CMDLINE_LINUX=\"cryptdevice=UUID=$(blkid ${DRIVE}3 -s UUID -o value):cryptsys\"g" /etc/default/grub
-nano /boot/grub/grub.cfg
 
 # Install grub
 grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=ArchLinux
 
 # Create grub.cfg
 grub-mkconfig -o /boot/grub/grub.cfg
-
-# Install grub
-grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=ArchLinux
 
 # Create crypted Swap Container
 cryptsetup luksFormat ${DRIVE}2
@@ -145,7 +151,7 @@ mkinitcpio -p linux
 chmod 600 /boot/initramfs-linux*
 
 # Enable Intel microcode CPU updates (if you use Intel processor, of course)
-pacman -S intel-ucode
+pacman -S --noconfirm intel-ucode
 grub-mkconfig -o /boot/grub/grub.cfg
 
 # Some additional security
@@ -161,29 +167,30 @@ sudo sed --in-place 's/^#\s*\(%wheel\s\+ALL=(ALL)\s\+ALL\)/\1/' /etc/sudoers
 # and uncomment string %wheel ALL=(ALL) ALL
 
 #Xorg Server etc
-xorg-server xorg-xinit xf86-video-intel
+pacman -S --noconfirm xorg-server xorg-xinit xf86-video-intel
 
 #Desktop Evironment (if unwanted comment the next lines)
-pacman -S gnome gnome-extra gdm
+pacman -S --noconfirm gnome gnome-extra gdm
 systemctl enable gdm.service NetworkManager
 
 #Custom Additional Packages (if unwanted comment the next lines)
-pacman -S firefox firefox-i18n-de thunderbird thunderbird-i18n-de htop tilix git
-pacman -S wget rsync svn linux-headers
-pacman -S xdg-user-dirs
+pacman -S --noconfirm firefox firefox-i18n-de thunderbird thunderbird-i18n-de htop tilix git
+pacman -S --noconfirm wget rsync svn linux-headers
+pacman -S --noconfirm xdg-user-dirs
 xdg-user-dirs-update
 
 # Reflector 
-pacman -S reflector
+pacman -S --noconfirm -S reflector
 reflector --verbose -l 5 -p https --sort rate --save /etc/pacman.d/mirrorlist
 
 # AUR-Helper
+su swerner
 cd /tmp
 git clone https://aur.archlinux.org/trizen.git
 cd trizen
-makepkg -rsi
+su swerner -c "makepkg -rsi"
 rm -R /tmp/trizen* 
-
+exit
 # ToDO after Setup and reboot
 #trizen -S mkinitcpio-openswap
 	#sudo blkid
@@ -196,3 +203,9 @@ rm -R /tmp/trizen*
 #
 #localectl --no-convert set-x11-keymap de pc105 nodeadkeys
 EOF
+
+#run p2 in chroot
+arch-chroot /mnt /root/b-e-a-s-t_p2.sh
+
+echo "arch-chroot finished..."
+read
