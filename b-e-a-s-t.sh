@@ -203,7 +203,7 @@ exit
 EOF
 
 #run p2 in chroot
-arch-chroot /mnt /root/b-e-a-s-t_p2.sh
+arch-chroot /mnt /mnt/root/b-e-a-s-t_p2.sh
 
 echo "arch-chroot finished..."
 read
