@@ -76,6 +76,11 @@ mount /dev/sda1 /mnt/boot/efi
 # Check
 lsblk
 
+# Update archlinux-keyring and refresh keys
+pacman -Sy archlinux-keyring
+pacman-key --populate archlinux
+pacman-key --refresh-keys
+
 # Install system
 pacstrap /mnt base base-devel grub-efi-x86_64 vim git efibootmgr dialog wpa_supplicant btrfs-progs bash-completion
 
