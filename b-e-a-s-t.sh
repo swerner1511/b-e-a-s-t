@@ -186,7 +186,7 @@ su swerner
 cd /tmp
 git clone https://aur.archlinux.org/trizen.git
 cd trizen
-su swerner -c "makepkg -rsi"
+makepkg -rsi
 rm -R /tmp/trizen* 
 exit
 # ToDO after Setup and reboot
