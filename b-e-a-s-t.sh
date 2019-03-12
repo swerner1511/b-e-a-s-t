@@ -80,7 +80,7 @@ lsblk
 pacstrap /mnt base base-devel grub-efi-x86_64 vim git efibootmgr dialog wpa_supplicant btrfs-progs bash-completion
 
 # Generate fstab
-genfstab -pU /mnt >> /mnt/etc/fstab
+genfstab -U /mnt >> /mnt/etc/fstab
 
 # Chroot into new installed system (make a block) need additional fixes
 cat <<EOF > /mnt/root/b-e-a-s-t_p2.sh
