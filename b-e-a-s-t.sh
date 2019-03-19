@@ -6,52 +6,33 @@
 #	Updated by S.Werner 12.03.2019
 #
 
-# DEFAULT Values for Script Variables (Change to your needs)
+## Partition Scheme
+#+----------------------+----------------------+----------------------+
+#| EFI system partition | System partition     | Swap partition       |
+#| unencrypted          | LUKS1-encrypted      | plain-encrypted      |
+#|                      |                      |                      |
+#| /efi                 | /                    | [SWAP]               |
+#| /dev/sda1            | /dev/sda3            | /dev/sda2            |
+#+----------------------+----------------------+----------------------+
+
+# Variables
 DRIVE=/dev/sda
-HOSTNAME=your-hostname
-_USERNAME=your-username
-_USERPWD=your-userpwd
-_ROOTPWD=root-pwd
-TIMEZONE=Europe/Berlin
-LOCALE=de_DE
-KEYMAP=de-latin1-nodeadkeys
 
-# Change Keylayout on live System
-loadkeys $KEYMAP
+# Set the keyboard layout
+loadkeys de-latin1-nodeadkeys
 
-# Enable WIFI
-wifi-menu
-
-# Enable network time synchronization
+# Update the system clock
 timedatectl set-ntp true
-                                                                                                                                                                                             
-# Check it                                                                                                                                                                                   
-timedatectl status                                                                                                                                                                           
 
-# Select Drive
-lsblk
-echo -n " == Set drive: esp. "/dev/sda" "
-read DRIVE
-                      
-# Wipe Drive Securely
-echo -n " == Wipe Drive Securely? (Y/n): "
-read SECURE_WIPE
-if [ "${SECURE_WIPE:-y}" == "y" ]; then
-	sgdisk --zap-all $DRIVE
-	cryptsetup open --type plain $DRIVE container --key-file /dev/random
-	dd if=/dev/zero of=/dev/mapper/container status=progress
-	cryptsetup close container
-fi
-
-# Create partitions                                                                                                                                                                          
+# Create partitions
 sgdisk --zap-all $DRIVE
 sgdisk --clear \
 	--new=1:0:+550MiB --typecode=1:ef00 --change-name=1:EFI \
     	--new=2:0:+8GiB   --typecode=2:8200 --change-name=2:cryptswap \
-    	--new=3:0:0       --typecode=3:8300 --change-name=3:cryptsystem \
+    	--new=3:0:0       --typecode=3:8300 --change-name=3:cryptsys \
 	$DRIVE
 
-# Make filesystem for EFI
+	# Make filesystem for EFI
 mkfs.fat -F32 /dev/sda1
 
 # Create crypted System Container with /root and /home etc.
@@ -73,9 +54,6 @@ mkdir /mnt/boot
 mkdir /mnt/boot/efi
 mount /dev/sda1 /mnt/boot/efi
 
-# Check
-lsblk
-
 # Update archlinux-keyring and refresh keys
 pacman -Sy archlinux-keyring
 pacman-key --populate archlinux
@@ -89,13 +67,12 @@ genfstab -U /mnt >> /mnt/etc/fstab
 
 # Chroot into new installed system (make a block) need additional fixes
 cat <<EOF > /mnt/root/b-e-a-s-t_p2.sh
-
 #Values
 DRIVE=/dev/sda
 HOSTNAME=your-hostname
 _USERNAME=your-username
-_USERPWD=your-userpwd
-_ROOTPWD=root-pwd
+_USERPWD=qwer
+_ROOTPWD=qwer
 TIMEZONE=Europe/Berlin
 LOCALE=de_DE
 KEYMAP=de-latin1-nodeadkeys
@@ -118,6 +95,7 @@ echo "root:${_ROOTPWD}" | chpasswd
 
 # Change Binaries in /etc/mkinitcpio.conf
 sed -i 's\^BINARIES=.*\BINARIES="/usr/bin/btrfs"\g' /etc/mkinitcpio.conf
+
 # Change HOOKS in /etc/mkinitcpio.conf
 sed -i '/HOOKS="base udev autodetect modconf block filesystems keyboard fsck"/c\HOOKS="base udev autodetect modconf keyboard keymap block encrypt openswap resume filesystems"' /etc/mkinitcpio.conf
 
@@ -187,28 +165,17 @@ pacman -S --noconfirm -S reflector
 reflector --verbose -l 5 -p https --sort rate --save /etc/pacman.d/mirrorlist
 
 # AUR-Helper
-su swerner
-cd /tmp
-git clone https://aur.archlinux.org/trizen.git
-cd trizen
-makepkg -rsi
-rm -R /tmp/trizen* 
+#su swerner
+#cd /tmp
+#git clone https://aur.archlinux.org/trizen.git
+#cd trizen
+#makepkg -rsi
+#rm -R /tmp/trizen* 
 exit
-# ToDO after Setup and reboot
-#trizen -S mkinitcpio-openswap
-	#sudo blkid
-	#sudo nano -w /etc/openswap.conf
-		#swap_device=/dev/disk/by-uuid/...
-		#crypt_swap_name=swapDevice
-		#keyfile_device=/dev/mapper/cryptsys
-		#keyfile_filename=etc/keyfile-cryptswap
-	#sudo mkinitcpio -p linux
-#
-#localectl --no-convert set-x11-keymap de pc105 nodeadkeys
 EOF
 
 #run p2 in chroot
 arch-chroot /mnt /mnt/root/b-e-a-s-t_p2.sh
 
-echo "arch-chroot finished..."
+echo ".. arch-chroot finished..."
 read
