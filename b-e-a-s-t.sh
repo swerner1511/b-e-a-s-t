@@ -127,7 +127,7 @@ dd bs=512 count=8 if=/dev/urandom of=/crypto_keyfile.bin
 chmod 000 /crypto_keyfile.bin
 cryptsetup luksAddKey ${DRIVE}3 /crypto_keyfile.bin
 sed -i 's\^FILES=.*\FILES="/crypto_keyfile.bin"\g' /etc/mkinitcpio.conf
-nano /etc/mkinicpio.conf
+nano /etc/mkinitcpio.conf
 mkinitcpio -p linux
 chmod 600 /boot/initramfs-linux*
 
